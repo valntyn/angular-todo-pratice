@@ -1,65 +1,21 @@
 <div class="todoapp">
   <h1 class="todoapp__title">todos {{ todos.length }}</h1>
 
-
-  {{ title.errors | json }}
-
   <div class="todoapp__content">
     <header class="todoapp__header">
       <button type="button" class="todoapp__toggle-all active"></button>
 
-      <form (ngSubmit)="addTodo()" [formGroup]="todoForm">
-        <input
-          type="text"
-          name="title"
-          class="todoapp__new-todo"
-          placeholder="What needs to be done?"
-          formControlName="title"
-          [style.backgroundColor]="title.errors && title.touched ? 'tomato' : ''"
-        />
-      </form>
+      <app-todo-form (save)="addTodo($event)"></app-todo-form>
     </header>
 
     <section class="todoapp__main">
-      <div
-        class="todo"
-        [class.completed]="todo.completed"
-        *ngFor="let todo of todos; let i = index"
-      >
-        <label class="todo__status-label">
-          <input
-            type="checkbox"
-            class="todo__status"
-            [(ngModel)]="todo.completed"
-          />
-        </label>
-
-        <form *ngIf="editing; else titleBlock">
-          <input
-            type="text"
-            class="todo__title-field"
-            placeholder="Empty todo will be deleted"
-            value="Todo is being edited now"
-          />
-        </form>
-
-        <ng-template #titleBlock>
-          <span class="todo__title">{{ todo.title }}</span>
-
-          <button
-            type="button"
-            class="todo__remove"
-            (click)="todos.splice(i, 1)"
-          >
-            ×
-          </button>
-        </ng-template>
-
-        <div class="modal overlay" [class.is-active]="false">
-          <div class="modal-background has-background-white-ter"></div>
-          <div class="loader"></div>
-        </div>
-      </div>
+      <app-todo
+      *ngFor="let todo of todos; let i = index trackBy: trackById"
+      [todo]="todo"
+      (delete)="deleteTodo(todo.id)"
+      (toggle)="toogleTodo(todo.id)"
+      (rename)="renameTodo(todo.id, $event)"
+      ></app-todo>
     </section>
 
     <footer class="todoapp__footer">

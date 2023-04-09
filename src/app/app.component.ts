@@ -1,61 +1,72 @@
-import { Component } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
-
-const todos = [
-  {id: 1, title: 'hi angular', completed: false},
-  {id: 2, title: 'i will learn you', completed: false},
-  {id: 3, title: '123', completed: true},
-  {id: 4, title: 'test test', completed: false},
-];
-
-interface Todo {
-  id: number;
-  title: string;
-  completed: boolean;
-}
+import { Component, OnInit } from '@angular/core';
+import { Todo } from './types/todo';
+import { TodosService } from './services/todos.service';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  styleUrls: ['./app.component.scss'],
 })
-export class AppComponent {
-  editing = false;
-  todos = todos;
-  todoForm = new FormGroup({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [
-        Validators.required,
-        Validators.minLength(3),
-      ],
-    }),
-  });
+export class AppComponent implements OnInit {
+  _todos: Todo[] = [];
+  activeTodos: Todo[] = [];
 
-  get title() {
-    return this.todoForm.get('title') as FormControl;
-  }
+  get todos() {
+    return this._todos
+  };
 
-  handleTodoToggle(event: Event, todo: Todo) {
-    todo.completed = (event.target as HTMLInputElement).checked
-  }
-
-  get activeTodos() {
-    return this.todos.filter(todo => !todo.completed);
-  }
-
-  addTodo() {
-    if (this.title.invalid) {
+  set todos(todos: Todo[]) {
+    if (todos === this._todos) {
       return
     }
 
-    const newTodo: Todo = {
-      id: +new Date(),
-      title: this.title.value as string,
-      completed: false,
-    };
+    this._todos = todos;
+    this.activeTodos = this._todos.filter(todo => !todo.completed);
+  }
 
-    this.todos.push(newTodo);
-    this.todoForm.reset();
+  constructor(
+    private todosService: TodosService
+  ) {}
+
+  ngOnInit(): void {
+    this.loadTodos()
+  }
+
+  loadTodos() {
+    this.todosService.getTodos()
+    .subscribe((todos) => this.todos = todos)
+  }
+
+  trackById(i: number, todo: Todo) {
+    return todo.id;
+  }
+
+  addTodo(newTitle: string) {
+    this.todosService.createTodo(newTitle)
+      .subscribe(() => this.loadTodos())
+  }
+
+  renameTodo(todoId: number, newTitle: string) {
+    this.todos = this.todos.map(todo => {
+      if (todo.id !== todoId) {
+        return todo
+      }
+
+      return { ...todo, title: newTitle}
+    })
+  }
+
+  toogleTodo(todoId: number) {
+    this.todos = this.todos.map(todo => {
+      if (todo.id !== todoId) {
+        return todo
+      }
+
+      return { ...todo, completed: !todo.completed}
+    })
+  }
+
+  deleteTodo(todoId: number) {
+    this.todos = this.todos.filter(todo => todo.id !== todoId)
   }
 }
